@@ -1,14 +1,5 @@
-import getFeaturesFromFile
 import getFeaturesWindows
-import plot
 import pandas as pd
-import MathUtilities
-import calculateTip
-import os
-import seaborn as sns
-import matplotlib.pyplot as plt
-from scipy import integrate
-from statsmodels.tsa.statespace.tools import diff
 import ML_Model_AND_Evaluation
 
 # Put the path of the directory where the data is located (keep the r before the string)
@@ -55,44 +46,15 @@ def runfeaturesextract(subjectLabels):
             #When the length of the df changes, also change "getFeaturesFromFile.py"
             df.columns = ['time', 'accX', 'accY', 'accZ', 'gyrX', 'gyrY', 'gyrZ', 'magX', 'magY', 'magZ','psi','theta','normAccel','normMag','normGyr']
 
-            #topDF
+            #topDF - we only use the acceleration data and the calculated psi & theta angles for the prediction
             totalDF = df[["time", "accX", 'accY', 'accZ','normAccel','psi','theta']]
-
             totalDF = totalDF.rename(columns={'accX': "accX_Top", 'accY': "accY_Top", 'accZ': "accZ_Top"})
 
-            #totalDF = df[["time", "accX", 'accY', 'accZ']].rename(index={1: "AccX_Top", 2: "AccY_Top", 3: "AccZ_Top"})
-            #tipDF is the dataframe that contains the vectors of the tip of the pen (Acceleration in three directions + psi, theta)
-            tipDF = calculateTip.calculateTip(totalDF)
-            totalDF = pd.concat([totalDF,tipDF], axis=1)
 
-            #calculate integration
+            # Pass subject's dataframe through window
+            featuresByWindowDF = getFeaturesWindows.passThroughWindow(totalDF, windowSize, overlapRatio)
 
-            # integrate.cumtrapz(totalDF['accX_Top'],initial = 0)
-            accX_top_diff = diff(totalDF['accX_Top'], k_diff=1)
-            accY_top_diff = diff(totalDF['accY_Top'], k_diff=1)
-            accZ_top_diff = diff(totalDF['accZ_Top'], k_diff=1)
-            acc_comb = round(accX_top_diff + accY_top_diff + accZ_top_diff,5)
-
-            # plt.figure()
-            # sns.lineplot(totalDF['time'], totalDF['accY_Tip'])
-            # sns.lineplot(totalDF['time'], totalDF['accY_Top'])
-            # plt.show()
-            #sns.lineplot(totalDF['time'], totalDF['accY_Tip'])
-            #sns.lineplot(totalDF['time'], totalDF['accZ_Top'])
-            #plt.show()
-
-            #sns.lineplot(totalDF['time'], totalDF['psi'])
-            #sns.lineplot(totalDF['time'], totalDF['theta'])
-            # plt.show()
-
-            # sns.lineplot(data['time'], data['accY_Top'])
-            # sns.lineplot(data['time'], data['accZ_Top'])
-
-
-            # Pass dataframe through window and set isRaw to False
-            featuresByWindowDF = getFeaturesWindows.passThroughWindow(totalDF, False, windowSize, overlapRatio)
-
-            # Insert label of subject
+            #Insert label of subject
             featuresByWindowDF.insert(0, 'subjectLabel', subjectLabels['Dataset'][ind] + "_" + subjectLabels['Subject'][ind])
 
             #Insert BHK scores of subject - insert command for insertion at specific space
