@@ -7,13 +7,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold, cross_val_score
 import matplotlib.pyplot as plt
+import sklearn.metrics
 from sklearn.linear_model import Ridge
 from Feature_Selection import FeatureSelector
 import random
 from plotPrediction import plotPrediction
 from tqdm import tqdm
 from classification_scoring import calculateBinaryScores, calculateTriScores
-
 
 import warnings
 
@@ -22,13 +22,10 @@ warnings.filterwarnings("ignore")
 # meta_data_source = "adult_pre_procdessed_meta_data.csv"
 # feature_exctracted_source = "ml_test_data.csv"
 
-
 def remove_cols(df, c):
     for col in c:
         df = df.loc[:, df.columns != col]
     return df
-
-
 
 def split_df_in_xy(df, y_choosen,index, uniqueChildren):
 
@@ -40,7 +37,6 @@ def split_df_in_xy(df, y_choosen,index, uniqueChildren):
     y = df[y_choosen]
 
     return x,y,label
-
 
 def get_Random_Forest_Regressor_feature_importance(rf, x, y):
     features = x.columns
@@ -55,7 +51,6 @@ def get_Random_Forest_Regressor_feature_importance(rf, x, y):
     plt.xlabel('Relative Importance')
     plt.show()
     return [features[i] for i in indices]
-
 
 def rmse(score):
     rmse = np.sqrt(-score)
@@ -99,7 +94,8 @@ def pipeline(df):
 
     # we identify the unique children in the database
     uniqueChildren = df['subjectLabel'].unique()
-    kf = KFold(n_splits=10, shuffle=True, random_state=3)
+    kf = KFold(n_splits=8, shuffle=True, random_state=3)
+
 
     for train_index, test_index in tqdm(kf.split(uniqueChildren)):
 
@@ -153,7 +149,18 @@ def pipeline(df):
         '''
         # FS.transform(test_x)
         '''
-        pred = rnd_clf.predict(test_x)
+
+        pred = rnd_clf.predict_proba(test_x)
+
+        #only compute if the two labels are in the dataframe, otherwise no ROC possible
+        if('yes' in test_y.tolist() and 'no' in test_y.tolist()):
+            print("ROC")
+            print(sklearn.metrics.roc_auc_score(test_y, rnd_clf.predict_proba(test_x)[:, 1]))
+            sklearn.metrics.plot_roc_curve(rnd_clf, test_x, test_y)
+            plt.show()
+
+        #pred = rnd_clf.predict(test_x)
+
         #save prediction and re-iterate
 
         #create column iterator
@@ -179,9 +186,10 @@ def pipeline(df):
 
         predictFrame = pd.concat([predictFrame,entry], axis=0)
 
-
     #calculation of classification scores - binary or tri(no,yes,mild)
-    calculateBinaryScores(predictFrame)
+    #print(predictFrame["y_real"])
+    #predictFrame.to_csv("predictFrame.csv")
+    #calculateBinaryScores(predictFrame)
     #calculateTriScores(predictFrame)
 
 '''
