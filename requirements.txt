@@ -19,7 +19,6 @@ scikit-learn==1.1.1
 scipy==1.8.1
 seaborn==0.11.2
 six==1.16.0
-sklearn==0.0
 statsmodels==0.13.2
 threadpoolctl==3.1.0
 tqdm==4.64.0

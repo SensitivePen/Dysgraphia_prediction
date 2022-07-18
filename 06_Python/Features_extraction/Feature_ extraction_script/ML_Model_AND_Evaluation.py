@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold, cross_val_score
 import matplotlib.pyplot as plt
+import sklearn.metrics
 from sklearn.linear_model import Ridge
 from Feature_Selection import FeatureSelector
 import random
@@ -38,6 +39,7 @@ def split_df_in_xy(df, y_choosen,index, uniqueChildren):
     label = df['subjectLabel']
     x = remove_cols(df, ["BHK_quality", "BHK_speed", "subjectLabel", "Class_binary", "Class_three"])
     y = df[y_choosen]
+
 
     return x,y,label
 
@@ -153,7 +155,10 @@ def pipeline(df):
         '''
         # FS.transform(test_x)
         '''
-        pred = rnd_clf.predict(test_x)
+
+        pred = rnd_clf.predict_proba(test_x)
+        #pred = rnd_clf.predict(test_x)
+
         #save prediction and re-iterate
 
         #create column iterator
@@ -181,7 +186,10 @@ def pipeline(df):
 
 
     #calculation of classification scores - binary or tri(no,yes,mild)
-    calculateBinaryScores(predictFrame)
+    print(predictFrame)
+    predictFrame.to_csv("predictFrame.csv")
+    #print(sklearn.metrics.roc_auc_score(test_y, rnd_clf.predict_proba(test_x)[:, 1]))
+    #calculateBinaryScores(predictFrame)
     #calculateTriScores(predictFrame)
 
 '''
