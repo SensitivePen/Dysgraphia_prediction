@@ -81,7 +81,7 @@ def runfeaturesextract(subjectLabels):
 if __name__ == "__main__":
 
     #window=[200,300,400,500,600]
-    window=[500]
+    window=[300,400]
     over=[1]
 
     for windowInd in window:
