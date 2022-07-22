@@ -96,12 +96,11 @@ def pipeline(df):
     uniqueChildren = df['subjectLabel'].unique()
     kf = KFold(n_splits=8, shuffle=True, random_state=3)
 
-    all_index = ([x for x in range(0,27)])
+    all_index = ([x for x in range(0,24)])
     all_x, all_y, all_label = split_df_in_xy(df, 'Class_binary', all_index, uniqueChildren)
 
     for train_index, test_index in tqdm(kf.split(uniqueChildren)):
 
-        print(test_index)
 
 
         # train_x, train_y, train_label = split_df_in_xy(df, 'Class_three', train_index, uniqueChildren)
@@ -159,7 +158,8 @@ def pipeline(df):
         #pred = rnd_clf.predict(test_x)
 
         #Define threshold for classification
-        threshold = 0.45
+        threshold = 0.5 #threshold like 50/50 proba
+        # threshold = 0.45 #optimized threshold for 0 fn
 
             #Convert threshold into list
         pred = ["no" if pred_proba[i][1] < threshold else "yes" for i in range(len(pred_proba))]
@@ -167,21 +167,24 @@ def pipeline(df):
 
         #Calculate ROC, AUC for each iteration
         #only compute if the two labels are in the dataframe, otherwise no ROC possible
-        if('yes' in test_y.tolist() and 'no' in test_y.tolist()):
-            print()
-            print("ROC")
+        def calculateROC():
+            if('yes' in test_y.tolist() and 'no' in test_y.tolist()):
+                print()
+                print("ROC")
 
-            #apply the trained model on the test subjects
-            # print(sklearn.metrics.roc_auc_score(test_y, pred_proba[:, 1]))
-            # sklearn.metrics.plot_roc_curve(rnd_clf, test_x, test_y)
+                #apply the trained model on the test subjects
+                #print(sklearn.metrics.roc_auc_score(test_y, pred_proba[:, 1]))
+                #sklearn.metrics.plot_roc_curve(rnd_clf, test_x, test_y)
 
-            #apply the trained model to ALL subjects (including the trained on subjects) - strong bias
-            print(sklearn.metrics.roc_auc_score(all_y, rnd_clf.predict_proba(all_x)[:, 1]))
-            sklearn.metrics.plot_roc_curve(rnd_clf, all_x, all_y)
+                #apply the trained model to ALL subjects (including the trained on subjects) - strong bias
+                print(sklearn.metrics.roc_auc_score(all_y, rnd_clf.predict_proba(all_x)[:, 1]))
+                sklearn.metrics.plot_roc_curve(rnd_clf, all_x, all_y)
 
-            plt.show()
+                plt.show()
 
-        #pred = rnd_clf.predict(test_x)
+        #EXECUTION of ROC here
+        calculateROC()
+
 
         #save prediction and re-iterate
 
@@ -207,6 +210,8 @@ def pipeline(df):
         entry = pd.DataFrame([test_label.tolist(), test_y.tolist(), pred, iterCol]).T.rename(columns={0:'labels', 1:'y_real', 2:'y_pred',3:'iter'})
 
         predictFrame = pd.concat([predictFrame,entry], axis=0)
+        predictFrame.to_excel("predictFrame.xlsx")
+        # print(predictFrame)
 
     #calculation of classification scores - binary or tri(no,yes,mild)
     #print(predictFrame["y_real"])
